@@ -1,67 +1,18 @@
-<?php
-include('db.php');
 
-// 1. Aggregated data: Strand and Grade distribution
-$distribution_sql = "SELECT 
-                        s.name AS Strand_Name, 
-                        s.grade AS Grade, 
-                        COUNT(st.student_id) AS Student_Count
-                    FROM 
-                        strands s
-                    LEFT JOIN 
-                        student_info st ON s.strand_id = st.strand_id
-                    GROUP BY 
-                        s.name, s.grade
-                    ORDER BY 
-                        s.grade, s.name";
+<html>
+  <!-- Search and Download buttons -->
+        <div class="row mb-3">
+            <div class="col-md-4 text-end">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-success">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="gray" class="bi bi-search" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.397h-.001l3.85 3.85a1 1 0 0 0 
+                            1.415-1.415l-3.85-3.85zm-5.242.656a5.5 5.5 0 
+                            1 1 0-11 5.5 5.5 0 0 1 0 11z" />
+                        </svg>
+                    </span>
+                    <input type="text" id="searchInput" onkeyup="searchTable()" class="form-control" placeholder="Search...">
+                </div>
+            </div>
 
-$distribution_result = $conn->query($distribution_sql);
-
-$strand_data = [];
-$grade_data = [];
-$students_distribution = [];
-
-if ($distribution_result && $distribution_result->num_rows > 0) {
-    while ($row = $distribution_result->fetch_assoc()) {
-        $students_distribution[] = $row;
-
-        if (!isset($strand_data[$row['Strand_Name']])) {
-            $strand_data[$row['Strand_Name']] = 0;
-        }
-        $strand_data[$row['Strand_Name']] += $row['Student_Count'];
-
-        if (!isset($grade_data[$row['Grade']])) {
-            $grade_data[$row['Grade']] = 0;
-        }
-        $grade_data[$row['Grade']] += $row['Student_Count'];
-    }
-}
-
-// 2. Full student information
-$student_info_sql = "SELECT 
-                        st.student_id AS Student_ID,
-                        st.first_name AS First_Name,
-                        st.last_name AS Last_Name,
-                        st.birthdate AS Birthdate,
-                        st.gender AS Gender,
-                        st.address AS Address,
-                        st.contact_number AS Contact_Number,
-                        s.name AS Strand_Name,
-                        s.grade AS Grade
-                    FROM 
-                        student_info st
-                    JOIN 
-                        strands s ON st.strand_id = s.strand_id
-                    ORDER BY 
-                        s.grade, s.name, st.last_name";
-
-$student_info_result = $conn->query($student_info_sql);
-
-$all_students = [];
-
-if ($student_info_result && $student_info_result->num_rows > 0) {
-    while ($row = $student_info_result->fetch_assoc()) {
-        $all_students[] = $row;
-    }
-}
-?>
+</html>
