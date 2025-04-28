@@ -4,3 +4,6 @@ ADD Middle_Name VARCHAR(100);
 
 aeonfree password
 pass: wXs5jKM0TiG9
+
+email: aldrinarabia03@gmail.com
+pass: password219
