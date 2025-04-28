@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 25, 2025 at 06:06 AM
+-- Generation Time: Apr 28, 2025 at 02:13 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -57,34 +57,35 @@ CREATE TABLE `student_info` (
   `gender` enum('Male','Female','Other') NOT NULL,
   `address` varchar(100) NOT NULL,
   `contact_number` varchar(20) NOT NULL,
-  `strand_id` int(11) NOT NULL
+  `strand_id` int(11) NOT NULL,
+  `Middle_Name` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `student_info`
 --
 
-INSERT INTO `student_info` (`student_id`, `first_name`, `last_name`, `birthdate`, `gender`, `address`, `contact_number`, `strand_id`) VALUES
-(1, 'Juan', 'Dela Cruz', '2006-05-15', 'Male', '123 Manila St', '09123456789', 1),
-(2, 'Maria', 'Santos', '2006-07-21', 'Female', '456 Quezon Ave', '09234567890', 1),
-(3, 'Pedro', 'Reyes', '2006-02-10', 'Male', '789 Makati City', '09345678901', 1),
-(4, 'Ana', 'Lopez', '2006-11-30', 'Female', '321 Taguig St', '09456789012', 2),
-(5, 'Luis', 'Gonzales', '2006-09-25', 'Male', '654 Pasig Blvd', '09567890123', 2),
-(6, 'Sofia', 'Martinez', '2006-04-18', 'Female', '987 Mandaluyong Rd', '09678901234', 2),
-(7, 'Carlos', 'Torres', '2005-08-12', 'Male', '111 Paranaque Ln', '09789012345', 3),
-(8, 'Isabel', 'Rivera', '2005-03-05', 'Female', '222 Las Pinas Ave', '09890123456', 3),
-(9, 'Andres', 'Fernandez', '2005-12-19', 'Male', '333 Valenzuela St', '09901234567', 3),
-(10, 'Elena', 'Ramirez', '2005-06-22', 'Female', '444 Marikina Way', '09112345678', 4),
-(11, 'Javier', 'Ortiz', '2005-01-14', 'Male', '555 San Juan Dr', '09223456789', 4),
-(12, 'Carmen', 'Vargas', '2005-10-08', 'Female', '666 Pasay Blvd', '09334567890', 4),
-(13, 'Miguel', 'Castillo', '2006-03-17', 'Male', '777 Cainta Rd', '09445678901', 1),
-(14, 'Andrea', 'Salazar', '2006-09-28', 'Female', '888 Antipolo St', '09556789012', 2),
-(15, 'Ricardo', 'Mendoza', '2005-07-11', 'Male', '999 Taytay Ave', '09667890123', 3),
-(16, 'Gabriela', 'Castro', '2005-04-03', 'Female', '101 Binangonan Ln', '09778901234', 4),
-(17, 'Felipe', 'Aquino', '2006-12-09', 'Male', '202 Angono Way', '09889012345', 1),
-(18, 'Beatriz', 'Bautista', '2006-08-24', 'Female', '303 Rodriguez Dr', '09990123456', 2),
-(19, 'Alfredo', 'Villanueva', '2005-11-16', 'Male', '404 San Mateo St', '09101234567', 3),
-(20, 'Rosario', 'Estrada', '2005-02-07', 'Female', '505 Montalban Ave', '09212345678', 4);
+INSERT INTO `student_info` (`student_id`, `first_name`, `last_name`, `birthdate`, `gender`, `address`, `contact_number`, `strand_id`, `Middle_Name`) VALUES
+(1, 'Juan', 'Dela Cruz', '2006-05-15', 'Male', '123 Manila St', '09123456789', 1, NULL),
+(2, 'Maria', 'Santos', '2006-07-21', 'Female', '456 Quezon Ave', '09234567890', 1, NULL),
+(3, 'Pedro', 'Reyes', '2006-02-10', 'Male', '789 Makati City', '09345678901', 1, NULL),
+(4, 'Ana', 'Lopez', '2006-11-30', 'Female', '321 Taguig St', '09456789012', 2, NULL),
+(5, 'Luis', 'Gonzales', '2006-09-25', 'Male', '654 Pasig Blvd', '09567890123', 2, NULL),
+(6, 'Sofia', 'Martinez', '2006-04-18', 'Female', '987 Mandaluyong Rd', '09678901234', 2, NULL),
+(7, 'Carlos', 'Torres', '2005-08-12', 'Male', '111 Paranaque Ln', '09789012345', 3, NULL),
+(8, 'Isabel', 'Rivera', '2005-03-05', 'Female', '222 Las Pinas Ave', '09890123456', 3, NULL),
+(9, 'Andres', 'Fernandez', '2005-12-19', 'Male', '333 Valenzuela St', '09901234567', 3, NULL),
+(10, 'Elena', 'Ramirez', '2005-06-22', 'Female', '444 Marikina Way', '09112345678', 4, NULL),
+(11, 'Javier', 'Ortiz', '2005-01-14', 'Male', '555 San Juan Dr', '09223456789', 4, NULL),
+(12, 'Carmen', 'Vargas', '2005-10-08', 'Female', '666 Pasay Blvd', '09334567890', 4, NULL),
+(13, 'Miguel', 'Castillo', '2006-03-17', 'Male', '777 Cainta Rd', '09445678901', 1, NULL),
+(14, 'Andrea', 'Salazar', '2006-09-28', 'Female', '888 Antipolo St', '09556789012', 2, NULL),
+(15, 'Ricardo', 'Mendoza', '2005-07-11', 'Male', '999 Taytay Ave', '09667890123', 3, NULL),
+(16, 'Gabriela', 'Castro', '2005-04-03', 'Female', '101 Binangonan Ln', '09778901234', 4, NULL),
+(17, 'Felipe', 'Aquino', '2006-12-09', 'Male', '202 Angono Way', '09889012345', 1, NULL),
+(18, 'Beatriz', 'Bautista', '2006-08-24', 'Female', '303 Rodriguez Dr', '09990123456', 2, NULL),
+(19, 'Alfredo', 'Villanueva', '2005-11-16', 'Male', '404 San Mateo St', '09101234567', 3, NULL),
+(20, 'Rosario', 'Estrada', '2005-02-07', 'Female', '505 Montalban Ave', '09212345678', 4, NULL);
 
 --
 -- Indexes for dumped tables
