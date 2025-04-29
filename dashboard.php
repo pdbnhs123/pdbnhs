@@ -1,6 +1,10 @@
 <?php
 include('db.php');
 include 'information.php';
+include 'security.php';
+/*include 'auth.php';*/
+
+include 'sidebar.html';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -8,6 +12,29 @@ include 'information.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Paso De Blas NHS Dashboard</title>
+    		<link
+			rel="apple-touch-icon"
+			sizes="180x180"
+			href="./img/pdb.png"
+		/>
+		<link
+			rel="icon"
+			type="image/png"
+			sizes="32x32"
+			href="./img/pdb.png"
+		/>
+		<link
+			rel="icon"
+			type="image/png"
+			sizes="8x8"
+			href="./img/pdb.png"
+		/>
+
+		<!-- Mobile Specific Metas -->
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1, maximum-scale=1"
+		/>
     <!-- Include external CSS and font resources -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
@@ -15,31 +42,7 @@ include 'information.php';
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Include Chart.js library -->
 </head>
 <body>
-    <!-- Sidebar navigation -->
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <div class="sidebar-logo">
-                <i><img src="./img/pdb.png" alt=""></i>
-            </div>
-            <h3>Paso De Blas NHS</h3> <!-- School name -->
-        </div>
-        
-        <div class="sidebar-menu">
-            <!-- Navigation menu items -->
-            <a href="dashboard.php" class="menu-item">
-                <i class="fas fa-chart-pie"></i>
-                <span>Dashboard</span> <!-- Dashboard link -->
-            </a>
-            <a href="students_info.php" class="menu-item">
-                <i class="fas fa-user-graduate"></i>
-                <span>Students</span> <!-- Students link -->
-            </a>
-            <a href="input.php" class="menu-item">
-                <i class="fas fa-user-plus"></i>
-                <span>Input Students</span> <!-- Input Students link -->
-            </a>
-        </div>
-    </div>
+
     
     <!-- Main content area -->
     <div class="main-content">
@@ -81,12 +84,7 @@ include 'information.php';
                 </div>
             </div><br>
 
-            <!-- Export Buttons section -->
-            <div class="text-center mt-4">
-                <button class="btn btn-outline-primary me-2" id="downloadCsv">Download CSV</button> <!-- CSV download button -->
-                <button class="btn btn-outline-success me-2" id="downloadWord">Download Word</button> <!-- Word download button -->
-                <button class="btn btn-outline-dark me-2" id="printPage">Print</button> <!-- Print button -->
-            </div>
+          
         </div>
     </div>
 
