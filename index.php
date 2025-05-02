@@ -1,78 +1,83 @@
 <?php
-// Secure session settings
-session_set_cookie_params([
-    'lifetime' => 0,
-    'path' => '/',
-    'domain' => $_SERVER['HTTP_HOST'],
-    'secure' => isset($_SERVER['HTTPS']), // Only send cookies over HTTPS
-    'httponly' => true, // JS cannot access session cookie
-    'samesite' => 'Strict', // Prevent CSRF
-]);
-session_start();
+require_once 'security.php'; // security headers & nonce
+require_once 'config.php';   // session & common setup
+require_once 'db.php';       // $pdo setup
 
-// Include DB connection securely
-require_once 'db.php';
-
-$error = '';
-
-// Redirect if already logged in
-if (!empty($_SESSION['admin_logged_in'])) {
-    header('Location: dashboard.php');
-    exit();
+// CSRF Token setup
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-// Process POST request securely
+$MAX_ATTEMPTS = 5;
+$LOCKOUT_DURATION = 300; // 5 minutes
+
+// Initialize tracking
+if (!isset($_SESSION['login_attempts'])) {
+    $_SESSION['login_attempts'] = 0;
+    $_SESSION['lockout_time'] = null;
+}
+
+$error = '';
+$remaining_attempts = $MAX_ATTEMPTS - $_SESSION['login_attempts'];
+
+// Lockout check
+if ($_SESSION['login_attempts'] >= $MAX_ATTEMPTS) {
+    $remaining = $_SESSION['lockout_time'] - time();
+    if ($remaining > 0) {
+        $error = "Too many failed attempts. Try again in " . ceil($remaining / 60) . " minute(s).";
+    } else {
+        $_SESSION['login_attempts'] = 0;
+        $_SESSION['lockout_time'] = null;
+        $remaining_attempts = $MAX_ATTEMPTS;
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Validate and sanitize input
-$username = trim(filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING));
-$password = trim($_POST['password']);
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        $error = 'Invalid CSRF token. Please refresh the page and try again.';
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); // Regenerate token after failure
+    } else {
+        $username = trim(filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING));
+        $password = $_POST['password'];
 
-$stored_username = $username; // store for reuse in form
-    if (!empty($username) && !empty($password)) {
-        $stmt = $conn->prepare("SELECT id, username, password, full_name FROM admin_users WHERE username = ?");
-        if ($stmt) {
-            $stmt->bind_param('s', $username);
-            $stmt->execute();
-            $result = $stmt->get_result();
+        if (!empty($username) && !empty($password)) {
+            try {
+                $stmt = $pdo->prepare("SELECT id, username, password, full_name FROM admin_users WHERE username = ?");
+                $stmt->execute([$username]);
+                $admin = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if ($result && $result->num_rows === 1) {
-                $admin = $result->fetch_assoc();
-
-                // Use hash_equals for constant-time comparison if you build your own hashes
-                if (password_verify($password, $admin['password'])) {
-                    // Regenerate session ID to prevent session fixation
+                if ($admin && password_verify($password, $admin['password'])) {
                     session_regenerate_id(true);
-
                     $_SESSION['admin_logged_in'] = true;
                     $_SESSION['admin_id'] = $admin['id'];
                     $_SESSION['admin_name'] = $admin['full_name'];
 
-                    // Update last login
-                    $update = $conn->prepare("UPDATE admin_users SET last_login = NOW() WHERE id = ?");
-                    if ($update) {
-                        $update->bind_param('i', $admin['id']);
-                        $update->execute();
-                        $update->close();
-                    }
+                    $pdo->prepare("UPDATE admin_users SET last_login = NOW() WHERE id = ?")->execute([$admin['id']]);
+
+                    $_SESSION['login_attempts'] = 0;
+                    $_SESSION['lockout_time'] = null;
 
                     header('Location: dashboard.php');
                     exit();
                 } else {
-                    $error = "Invalid username or password.";
+                    $_SESSION['login_attempts']++;
+                    $remaining_attempts = $MAX_ATTEMPTS - $_SESSION['login_attempts'];
+
+                    if ($_SESSION['login_attempts'] >= $MAX_ATTEMPTS) {
+                        $_SESSION['lockout_time'] = time() + $LOCKOUT_DURATION;
+                        $error = "Too many failed attempts. Try again in " . ceil($LOCKOUT_DURATION / 60) . " minute(s).";
+                    } else {
+                        $error = "Invalid username or password. Attempts left: $remaining_attempts";
+                    }
                 }
-            } else {
-                $error = "Invalid username or password.";
+            } catch (PDOException $e) {
+                $error = "Server error. Please try again later.";
             }
-            $stmt->close();
         } else {
-            $error = "Server error. Please try again later.";
+            $error = "Please enter both username and password.";
         }
-    } else {
-        $error = "Please enter both username and password.";
     }
 }
-
-// NEVER echo or var_dump sensitive details like $error directly without escaping if displaying
 ?>
 
 <!DOCTYPE html>
@@ -80,35 +85,12 @@ $stored_username = $username; // store for reuse in form
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login - Paso De Blas NHS</title>
-    		<!-- Site favicon -->
-		<link
-			rel="apple-touch-icon"
-			sizes="180x180"
-			href="./img/pdb.png"
-		/>
-		<link
-			rel="icon"
-			type="image/png"
-			sizes="32x32"
-			href="./img/pdb.png"
-		/>
-		<link
-			rel="icon"
-			type="image/png"
-			sizes="8x8"
-			href="./img/pdb.png"
-		/>
-
-		<!-- Mobile Specific Metas -->
-		<meta
-			name="viewport"
-			content="width=device-width, initial-scale=1, maximum-scale=1"
-		/>
+    <title>Admin Login</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
     <style>
-        :root {
+            :root {
             --primary: #4361ee;
             --primary-dark: #3a56d4;
             --secondary: #3f37c9;
@@ -138,7 +120,6 @@ $stored_username = $username; // store for reuse in form
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxkZWZzPjxwYXR0ZXJuIGlkPSJwYXR0ZXJuIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiIHBhdHRlcm5UcmFuc2Zvcm09InJvdGF0ZSg0NSkiPjxyZWN0IHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgZmlsbD0icmdiYSgyMTksMjIxLDIyMSwwLjMpIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI3BhdHRlcm4pIi8+PC9zdmc+');
         }
         
         .login-container {
@@ -221,14 +202,24 @@ $stored_username = $username; // store for reuse in form
             color: #9ca3af;
         }
 
-        .password-container i {
-            position: absolute;
-            right: 1.25rem;
-            top: 3.25rem;
-            color: var(--gray);
-            cursor: pointer;
-            transition: var(--transition);
-        }
+        .password-container {
+    position: relative;
+}
+
+#togglePassword {
+    position: absolute;
+    right: 10px;  /* Adjust this based on your design */
+    top: 50%;
+    transform: translateY(-50%);
+    color: #aaa;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: 0.2s;
+}
+
+#togglePassword:hover {
+    color: #333;
+}
 
         .password-container i:hover {
             color: var(--dark);
@@ -294,49 +285,45 @@ $stored_username = $username; // store for reuse in form
                 border-radius: var(--rounded);
             }
         }
-    </style>
+        </style>
 </head>
 <body>
     <div class="login-container">
         <div class="logo">
-            <img src="./img/pdb.png" alt="Paso De Blas NHS Logo">
+            <img src="./img/pdb.png" alt="Logo">
             <h2>Welcome Back</h2>
-            <p>Enter your credentials to access the admin portal</p>
         </div>
         
         <?php if (!empty($error)): ?>
             <div class="error"><?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
-        
-        <form method="POST" action="login.php">
+
+        <form method="POST" action="">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+
             <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" id="username" name="username" required placeholder="admin@pasodeblas.edu.ph" value="<?= htmlspecialchars($username ?? '') ?>">
-
+                <input type="text" id="username" name="username"  required value="<?= htmlspecialchars($username ?? '') ?>">
             </div>
-            
+
             <div class="form-group password-container">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" required placeholder="••••••••">
+                <input type="password" id="password" name="password" required>
                 <i class="fas fa-eye" id="togglePassword"></i>
             </div>
-            <button type="submit" class="btn">
-                <span>Sign In</span>
-                <i class="fas fa-arrow-right"></i>
-            </button>
+
+            <button type="submit" class="btn">Sign In</button>
         </form>
     </div>
+<script>
+    // Password visibility toggle
+    document.querySelector('#togglePassword').addEventListener('click', function() {
+        const passwordField = document.querySelector('#password');
+        const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordField.setAttribute('type', type);
+        this.classList.toggle('fa-eye-slash');
+    });</script>
 
-    <script>
-        // Toggle password visibility
-        const togglePassword = document.querySelector('#togglePassword');
-        const password = document.querySelector('#password');
 
-        togglePassword.addEventListener('click', function() {
-            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-            password.setAttribute('type', type);
-            this.classList.toggle('fa-eye-slash');
-        });
-    </script>
 </body>
 </html>
