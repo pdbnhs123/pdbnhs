@@ -1,10 +1,11 @@
 <?php
-// Database connection
-$conn = new mysqli('localhost', 'root', '', 'pdb');
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+// Database connection using PDO
+try {
+    $pdo = new PDO('mysql:host=localhost;dbname=pdb;charset=utf8mb4', 'root', '');
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+} catch (PDOException $e) {
+    die("Connection failed: " . $e->getMessage());
 }
 
 // Create the student_info table if it doesn't exist
@@ -20,24 +21,26 @@ $createTableSQL = "CREATE TABLE IF NOT EXISTS student_info (
     submission_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
 
-if (!$conn->query($createTableSQL)) {
-    die("Error creating table: " . $conn->error);
+try {
+    $pdo->exec($createTableSQL);
+} catch (PDOException $e) {
+    die("Error creating table: " . $e->getMessage());
 }
 
 // Process form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Get and sanitize form data
-    $studentType = $conn->real_escape_string($_POST['studentType'] ?? '');
-    $fullName = $conn->real_escape_string($_POST['fullname'] ?? '');
-    $gender = $conn->real_escape_string($_POST['gender'] ?? '');
+    // Get form data
+    $studentType = $_POST['studentType'] ?? '';
+    $fullName = $_POST['fullname'] ?? '';
+    $gender = $_POST['gender'] ?? '';
     $age = (int)($_POST['age'] ?? 0);
-    $strand = $conn->real_escape_string($_POST['strand'] ?? '');
-    $document = $conn->real_escape_string($_POST['documents'] ?? '');
+    $strand = $_POST['strand'] ?? '';
+    $document = $_POST['documents'] ?? '';
     
     // Handle city selection
-    $city = $conn->real_escape_string($_POST['city'] ?? '');
+    $city = $_POST['city'] ?? '';
     if ($city === 'Others') {
-        $city = $conn->real_escape_string($_POST['otherCity'] ?? '');
+        $city = $_POST['otherCity'] ?? '';
     }
 
     // Validate required fields
@@ -50,24 +53,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($city)) $errors[] = "City is required";
 
     if (empty($errors)) {
-        // Insert data into database
-        $stmt = $conn->prepare("INSERT INTO student_info 
-            (student_type, full_name, gender, age, strand, city, documents_submitted) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)");
-        
-        if ($stmt) {
-            $stmt->bind_param("sssisss", $studentType, $fullName, $gender, $age, $strand, $city, $document);
+        try {
+            // Insert data into database
+            $stmt = $pdo->prepare("INSERT INTO student_info 
+                (student_type, full_name, gender, age, strand, city, documents_submitted) 
+                VALUES (:student_type, :full_name, :gender, :age, :strand, :city, :documents)");
             
-            if ($stmt->execute()) {
-                $success = "Student information submitted successfully!";
-                // Clear POST data to show empty form
-                $_POST = [];
-            } else {
-                $errors[] = "Database error: " . $stmt->error;
-            }
-            $stmt->close();
-        } else {
-            $errors[] = "Database error: " . $conn->error;
+            $stmt->execute([
+                ':student_type' => $studentType,
+                ':full_name' => $fullName,
+                ':gender' => $gender,
+                ':age' => $age,
+                ':strand' => $strand,
+                ':city' => $city,
+                ':documents' => $document
+            ]);
+            
+            $success = "Student information submitted successfully!";
+            // Clear POST data to show empty form
+            $_POST = [];
+        } catch (PDOException $e) {
+            $errors[] = "Database error: " . $e->getMessage();
         }
     }
 }
@@ -81,7 +87,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
     <style>
-        /* [Previous CSS styles remain exactly the same] */
         :root {
             --primary-blue: #4361ee;
             --secondary-blue:rgb(0, 0, 0);
