@@ -1,46 +1,27 @@
 <?php
-// Database connection using PDO
-try {
-    $pdo = new PDO('mysql:host=localhost;dbname=pdb;charset=utf8mb4', 'root', '');
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-} catch (PDOException $e) {
-    die("Connection failed: " . $e->getMessage());
-}
 
-// Create the student_info table if it doesn't exist
-$createTableSQL = "CREATE TABLE IF NOT EXISTS student_info (
-    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    student_type ENUM('new', 'transferee', 'returnee') NOT NULL,
-    full_name VARCHAR(100) NOT NULL,
-    gender ENUM('male', 'female', 'other') NOT NULL,
-    age INT NOT NULL,
-    strand ENUM('STEM', 'HUMSS', 'ABM', 'GAS', 'TVL', 'Arts') NOT NULL,
-    city VARCHAR(50) NOT NULL,
-    documents_submitted ENUM('PSA', 'Form 137', 'Good Moral', 'Card'),
-    submission_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
-
-try {
-    $pdo->exec($createTableSQL);
-} catch (PDOException $e) {
-    die("Error creating table: " . $e->getMessage());
-}
+require_once 'security.php';
+require_once 'db.php';
 
 // Process form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Get form data
     $studentType = $_POST['studentType'] ?? '';
-    $fullName = $_POST['fullname'] ?? '';
+    $fullName = trim($_POST['fullname'] ?? '');
     $gender = $_POST['gender'] ?? '';
     $age = (int)($_POST['age'] ?? 0);
-    $strand = $_POST['strand'] ?? '';
-    $document = $_POST['documents'] ?? '';
-    
+    $strand = trim($_POST['strand'] ?? '');
+
+    // Handle individual documents (checkboxes)
+    $PSA = isset($_POST['PSA']) ? 1 : 0;
+    $Form137 = isset($_POST['Form137']) ? 1 : 0;
+    $GoodMoral = isset($_POST['Good_moral']) ? 1 : 0;
+    $Card = isset($_POST['Card']) ? 1 : 0;
+
     // Handle city selection
     $city = $_POST['city'] ?? '';
     if ($city === 'Others') {
-        $city = $_POST['otherCity'] ?? '';
+        $city = trim($_POST['otherCity'] ?? '');
     }
 
     // Validate required fields
@@ -56,9 +37,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             // Insert data into database
             $stmt = $pdo->prepare("INSERT INTO student_info 
-                (student_type, full_name, gender, age, strand, city, documents_submitted) 
-                VALUES (:student_type, :full_name, :gender, :age, :strand, :city, :documents)");
-            
+                (student_type, full_name, gender, age, strand, city, psa, form137, good_moral, card) 
+                VALUES (:student_type, :full_name, :gender, :age, :strand, :city, :psa, :form137, :good_moral, :card)");
+
             $stmt->execute([
                 ':student_type' => $studentType,
                 ':full_name' => $fullName,
@@ -66,12 +47,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':age' => $age,
                 ':strand' => $strand,
                 ':city' => $city,
-                ':documents' => $document
+                ':psa' => $PSA,
+                ':form137' => $Form137,
+                ':good_moral' => $GoodMoral,
+                ':card' => $Card
             ]);
-            
+
             $success = "Student information submitted successfully!";
-            // Clear POST data to show empty form
-            $_POST = [];
+            $_POST = []; // Clear form
         } catch (PDOException $e) {
             $errors[] = "Database error: " . $e->getMessage();
         }
@@ -83,13 +66,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Favicon Configuration -->
+    <!-- Standard ICO format (fallback) -->
+    <link rel="icon" href="img/pdb.png" type="image/x-icon">
+    
+    <!-- Modern browsers (PNG format) -->
+    <link rel="icon" type="image/png" sizes="32x32" href="img/pdb.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="img/pdb.png">
+    
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png">
+    
+    <!-- Windows Metro -->
+    <meta name="msapplication-TileColor" content="#0d265c">
+    <meta name="msapplication-TileImage" content="img/pdb.png">
     <title>Student Information Form</title>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
     <style>
         :root {
             --primary-blue: #4361ee;
-            --secondary-blue:rgb(0, 0, 0);
+            --secondary-blue: rgb(0, 0, 0);
             --light-blue: #4cc9f0;
             --background: #f8f9fa;
             --card-bg: #ffffff;
@@ -199,14 +197,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flex-wrap: wrap;
         }
         
-        .radio-option {
+        .radio-option, .checkbox-option {
             display: flex;
             align-items: center;
             position: relative;
             cursor: pointer;
         }
         
-        .radio-option input {
+        .radio-option input[type="radio"],
+        .checkbox-option input[type="checkbox"] {
             margin-right: 10px;
             width: 18px;
             height: 18px;
@@ -221,9 +220,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         .documents-options {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 15px;
         }
+        .checkbox-option {
+    margin-bottom: 8px;
+}
         
         button {
             background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
@@ -291,7 +293,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             .documents-options {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
             }
             
             .radio-group {
@@ -392,11 +394,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <select id="strand" name="strand" required>
                     <option value="" disabled selected>Select your strand</option>
                     <option value="STEM" <?= isset($_POST['strand']) && $_POST['strand'] === 'STEM' ? 'selected' : '' ?>>STEM</option>
-                    <option value="HUMSS" <?= isset($_POST['strand']) && $_POST['strand'] === 'HUMSS' ? 'selected' : '' ?>>HUMSS</option>
                     <option value="ABM" <?= isset($_POST['strand']) && $_POST['strand'] === 'ABM' ? 'selected' : '' ?>>ABM</option>
-                    <option value="GAS" <?= isset($_POST['strand']) && $_POST['strand'] === 'GAS' ? 'selected' : '' ?>>GAS</option>
-                    <option value="TVL" <?= isset($_POST['strand']) && $_POST['strand'] === 'TVL' ? 'selected' : '' ?>>TVL</option>
-                    <option value="Arts" <?= isset($_POST['strand']) && $_POST['strand'] === 'Arts' ? 'selected' : '' ?>>Arts</option>
                 </select>
             </div>
             
@@ -414,40 +412,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             
             <!-- Other City Input (hidden by default) -->
-            <div class="form-group floating-label" id="otherCityContainer" style="<?= isset($_POST['city']) && $_POST['city'] === 'Others' ? '' : 'display: none;' ?>">
+            <div class="form-group floating-label" id="otherCityContainer" style="<?= (isset($_POST['city']) && $_POST['city'] === 'Others') ? '' : 'display: none;' ?>">
                 <input type="text" id="otherCity" name="otherCity" placeholder=" " 
-                       value="<?= isset($_POST['city']) && $_POST['city'] === 'Others' && isset($_POST['otherCity']) ? htmlspecialchars($_POST['otherCity']) : '' ?>">
+                       value="<?= (isset($_POST['city']) && $_POST['city'] === 'Others' && isset($_POST['otherCity'])) ? htmlspecialchars($_POST['otherCity']) : '' ?>"
+                       <?= (isset($_POST['city']) && $_POST['city'] === 'Others') ? 'required' : '' ?>>
                 <label for="otherCity">Specify City</label>
             </div>
             
-            <!-- Documents -->
+            <!-- Documents - Changed to Checkboxes -->
             <div class="form-group documents-group">
-                <label>Documents Submitted</label>
-                <div class="documents-options">
-                    <div class="radio-option">
-                        <input type="radio" id="psa" name="documents" value="PSA" <?= isset($_POST['documents']) && $_POST['documents'] === 'PSA' ? 'checked' : '' ?>>
-                        <label for="psa">PSA</label>
-                    </div>
-                    <div class="radio-option">
-                        <input type="radio" id="form137" name="documents" value="Form 137" <?= isset($_POST['documents']) && $_POST['documents'] === 'Form 137' ? 'checked' : '' ?>>
-                        <label for="form137">Form 137</label>
-                    </div>
-                    <div class="radio-option">
-                        <input type="radio" id="goodmoral" name="documents" value="Good Moral" <?= isset($_POST['documents']) && $_POST['documents'] === 'Good Moral' ? 'checked' : '' ?>>
-                        <label for="goodmoral">Good Moral</label>
-                    </div>
-                    <div class="radio-option">
-                        <input type="radio" id="card" name="documents" value="Card" <?= isset($_POST['documents']) && $_POST['documents'] === 'Card' ? 'checked' : '' ?>>
-                        <label for="card">Card</label>
-                    </div>
-                </div>
-            </div>
+    <label>Documents Submitted (Check all that apply)</label>
+    <div class="documents-options">
+        <div class="checkbox-option">
+            <input type="checkbox" id="psa" name="PSA" value="1" <?= isset($_POST['PSA']) ? 'checked' : '' ?>>
+            <label for="psa">PSA</label>
+        </div>
+        <div class="checkbox-option">
+            <input type="checkbox" id="form137" name="Form137" value="1" <?= isset($_POST['Form137']) ? 'checked' : '' ?>>
+            <label for="form137">Form 137</label>
+        </div>
+        <div class="checkbox-option">
+            <input type="checkbox" id="goodmoral" name="Good_moral" value="1" <?= isset($_POST['Good_moral']) ? 'checked' : '' ?>>
+            <label for="goodmoral">Good Moral</label>
+        </div>
+        <div class="checkbox-option">
+            <input type="checkbox" id="card" name="Card" value="1" <?= isset($_POST['Card']) ? 'checked' : '' ?>>
+            <label for="card">Card</label>
+        </div>
+    </div>
+</div>
+
             
             <button type="submit">Submit Application</button>
         </form>
     </div>
 
-    <?php if (isset($success)): ?>
+<?php if (isset($success)): ?>
     <script>
         window.onload = function () {
             Swal.fire({
@@ -455,21 +455,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 title: 'Success!',
                 text: '<?= $success ?>',
                 confirmButtonColor: '#3085d6',
-                confirmButtonText: 'OK'
+                confirmButtonText: 'OK',
+                timer: 3000,  // Auto close after 3 seconds
+                timerProgressBar: true,
+                willClose: () => {
+                    window.location.href = 'https://jrsprog.github.io/PDBNHS/enrollment.html'; // Redirect to dashboard
+                }
             });
         };
     </script>
-    <?php endif; ?>
+<?php endif; ?>     
 
     <script>
         function showOtherCityInput(select) {
             const otherCityContainer = document.getElementById('otherCityContainer');
+            const otherCityInput = document.getElementById('otherCity');
+            
             if (select.value === 'Others') {
                 otherCityContainer.style.display = 'block';
-                document.getElementById('otherCity').required = true;
+                otherCityInput.required = true;
             } else {
                 otherCityContainer.style.display = 'none';
-                document.getElementById('otherCity').required = false;
+                otherCityInput.required = false;
+                otherCityInput.value = ''; // Clear the value when not "Others"
             }
         }
         
