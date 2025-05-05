@@ -9,7 +9,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Define the environment for error reporting (production or development)
-define('ENVIRONMENT', 'development'); // Change to 'production' for live environment
+define('ENVIRONMENT', 'production');
 
 // Set error reporting based on the environment
 if (ENVIRONMENT === 'production') {
@@ -27,6 +27,17 @@ $dbConfig = [
     'DB_NAME' => 'pdb', // Replace with your local DB name
     'DB_USER' => 'root',               // Default XAMPP user is 'root'
     'DB_PASS' => '',                   // Default XAMPP password is empty
+];
+
+// Prepare the DSN string for PDO connection
+$dsn = "mysql:host={$dbConfig['DB_HOST']};dbname={$dbConfig['DB_NAME']};charset=utf8mb4";
+
+// PDO connection options
+$options = [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,    // Throw exceptions on errors
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, // Fetch as associative arrays
+    PDO::ATTR_EMULATE_PREPARES => false,            // Use real prepared statements
+    PDO::ATTR_TIMEOUT => 3,                          // Set a timeout for the connection
 ];
 
 // Prepare the DSN string for PDO connection
