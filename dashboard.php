@@ -1,9 +1,13 @@
 <?php
-include('db.php');
-include 'information.php';
-include 'security.php';
-/*include 'auth.php';*/
-
+require_once 'security.php'; // security headers & nonce
+require_once 'config.php';   // session & common setup
+require_once 'db.php';       // $pdo setup
+require_once 'information.php';
+$username = '';
+if (!isset($_SESSION['admin_logged_in'])) {
+    header("Location: index.php");
+    exit();
+}
 include 'sidebar.html';
 ?>
 <!DOCTYPE html>
@@ -11,236 +15,230 @@ include 'sidebar.html';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Paso De Blas NHS Dashboard</title>
-    		<link
-			rel="apple-touch-icon"
-			sizes="180x180"
-			href="./img/pdb.png"
-		/>
-		<link
-			rel="icon"
-			type="image/png"
-			sizes="32x32"
-			href="./img/pdb.png"
-		/>
-		<link
-			rel="icon"
-			type="image/png"
-			sizes="8x8"
-			href="./img/pdb.png"
-		/>
-
-		<!-- Mobile Specific Metas -->
-		<meta
-			name="viewport"
-			content="width=device-width, initial-scale=1, maximum-scale=1"
-		/>
-    <!-- Include external CSS and font resources -->
+    
+    <!-- Favicon Configuration -->
+    <link rel="icon" href="img/pdb.png" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="32x32" href="img/pdb.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="img/pdb.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/pdb.pn">
+    <meta name="msapplication-TileColor" content="#0d265c">
+    <meta name="msapplication-TileImage" content="img/pdb.png">
+    
+    <!-- CSS and Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Include Chart.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+        .chart-wrapper {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
-
-    
-    <!-- Main content area -->
     <div class="main-content">
         <div class="header">
-            <h1>Dashboard Overview</h1> <!-- Page title -->
+            <h1>Dashboard Overview</h1>
         </div>
         
         <div class="container my-5">
-            <!-- Grade Summary Cards section -->
-              <div class="row justify-content-center g-4">
-                <!-- Grade 11 Card -->
-                <div class="col-md-4">
-                    <div class="card shadow border-primary">
-                        <div class="card-body text-center">
-                        <i class="fa-solid fa-user"></i>
-                            <h5 class="card-title text-primary">Grade 11</h5>
-                            <p class="card-text fs-1 fw-bold"><?php echo $grade_data['11'] ?? 0; ?></p> <!-- Display Grade 11 count -->
+            <!-- Strand Summary Cards -->
+            <div class="row justify-content-center g-4">
+                <?php foreach ($strand_data as $strand => $count): ?>
+                    <div class="col-md-4">
+                        <div class="card shadow border-info">
+                            <div class="card-body text-center">
+                                <i class="fa-solid fa-user"></i>
+                                <h5 class="card-title text-info"><?= htmlspecialchars($strand) ?></h5>
+                                <p class="card-text fs-1 fw-bold"><?= $count ?></p>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Grade 12 Card -->
-                <div class="col-md-4">
-                    <div class="card shadow border-success">
-                        <div class="card-body text-center">
-                        <i class="fa-solid fa-user"></i>
-                            <h5 class="card-title text-success">Grade 12</h5>
-                            <p class="card-text fs-1 fw-bold"><?php echo $grade_data['12'] ?? 0; ?></p> <!-- Display Grade 12 count -->
-                        </div>
-                    </div>
-                </div>
+                <?php endforeach; ?>
             </div>
 
-            <!-- Strand Distribution Chart section -->
-            <div class="chart-container card shadow-sm p-4 my-4"><br>
-              <center>  <h3 class="text-center mb-4">Strand Distribution Chart</h3> </center> <!-- Chart title -->
+            <!-- Document Submission Chart -->
+            <div class="chart-container card shadow-sm p-4 my-4">
+                <br>
+                <center><h3 class="text-center mb-4">Document Submission Summary</h3></center>
                 <div class="chart-wrapper">
-                    <canvas id="strandChart"></canvas> <!-- Chart canvas element -->
+                    <canvas id="documentChart"></canvas>
                 </div>
-            </div><br>
-
-          
+            </div>
+            <br>
         </div>
     </div>
 
     <script>
-        // Initialize the page when DOM is loaded
+        // Initialize everything when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
-            initializeSidebar(); // Set up sidebar functionality
-            initializeStrandChart(); // Initialize the strand chart
-            setupCardHover(); // Set up card hover effects
-            setupExportButtons(); // Set up export button handlers
+            initializeSidebar();
+            initializeDocumentChart(); // This will now show the chart
+            setupCardHover();
+            setupExportButtons();
         });
 
-        let strandChart = null; // Global variable for chart instance
-
-        // Function to initialize sidebar interactions
         function initializeSidebar() {
-            const menuItems = document.querySelectorAll('.menu-item'); // Get all menu items
+            const menuItems = document.querySelectorAll('.menu-item');
             
             menuItems.forEach(item => {
-                // Add hover effects to menu items
                 item.addEventListener('mouseenter', function() {
-                    this.querySelector('i').style.transform = 'translateX(5px)'; // Move icon on hover
+                    this.querySelector('i').style.transform = 'translateX(5px)';
                 });
                 
                 item.addEventListener('mouseleave', function() {
-                    this.querySelector('i').style.transform = 'translateX(0)'; // Reset icon position
+                    this.querySelector('i').style.transform = 'translateX(0)';
                 });
                 
-                // Add click effects to menu items
                 item.addEventListener('click', function(e) {
-                    menuItems.forEach(i => i.classList.remove('active')); // Remove active class from all
-                    this.classList.add('active'); // Add active class to clicked item
+                    menuItems.forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
                     
-                    // Create ripple effect on click
                     const rect = this.getBoundingClientRect();
                     const ripple = document.createElement('span');
                     ripple.classList.add('ripple');
                     ripple.style.left = `${e.clientX - rect.left}px`;
                     ripple.style.top = `${e.clientY - rect.top}px`;
                     this.appendChild(ripple);
-                    setTimeout(() => ripple.remove(), 800); // Remove ripple after animation
+                    setTimeout(() => ripple.remove(), 800);
                 });
             });
             
-            // Handle window resize events
             let resizeTimer;
             window.addEventListener('resize', function() {
-                document.body.classList.add('resize-animation-stopper'); // Pause animations during resize
+                document.body.classList.add('resize-animation-stopper');
                 clearTimeout(resizeTimer);
                 resizeTimer = setTimeout(() => {
                     document.body.classList.remove('resize-animation-stopper');
-                    if (strandChart) {
-                        strandChart.resize(); // Resize chart if window resizes
-                    }
                 }, 400);
             });
         }
 
-        // Function to initialize the strand distribution chart
-        function initializeStrandChart() {
-            const chartEl = document.getElementById('strandChart');
-            if (!chartEl) return; // Exit if chart element not found
-            
-            if (strandChart) {
-                strandChart.destroy(); // Destroy existing chart instance
+        function initializeDocumentChart() {
+            const chartEl = document.getElementById('documentChart');
+            if (!chartEl) {
+                console.error("Chart element not found");
+                return;
             }
+
+            // Destroy previous chart if exists
+            if (chartEl.chart) {
+                chartEl.chart.destroy();
+            }
+
+            const documentData = <?php echo json_encode($document_data, JSON_HEX_TAG); ?>;
             
-            // Get data from PHP
-            const strandLabels = Object.keys(<?php echo json_encode($strand_data); ?>);
-            const strandValues = Object.values(<?php echo json_encode($strand_data); ?>);
+            // Debug: Check what data we're getting
+            console.log("Document Data:", documentData);
             
-            // Create new chart instance
+            if (!documentData || Object.keys(documentData).length === 0) {
+                chartEl.innerHTML = '<p class="text-muted">No document data available</p>';
+                console.warn("No document data available");
+                return;
+            }
+
+            const documentLabels = Object.keys(documentData);
+            const documentValues = Object.values(documentData);
+
+            const backgroundColors = [
+                '#007bff', '#28a745', '#ffc107', '#dc3545', 
+                '#6f42c1', '#fd7e14', '#20c997', '#e83e8c'
+            ].slice(0, documentLabels.length);
+            
+            const borderColors = [
+                '#0056b3', '#1c7430', '#d39e00', '#bd2130',
+                '#5a3d8a', '#d5670d', '#17a673', '#c5306d'
+            ].slice(0, documentLabels.length);
+
             const ctx = chartEl.getContext('2d');
-            strandChart = new Chart(ctx, {
-                type: 'bar', // Set chart type to bar
+            chartEl.chart = new Chart(ctx, {
+                type: 'bar',
                 data: {
-                    labels: strandLabels, // Set strand names as labels
+                    labels: documentLabels,
                     datasets: [{
-                        label: 'Number of Students',
-                        data: strandValues, // Set student counts as data
-                        backgroundColor: ' #0d265c', // Bar color
-                        borderColor: 'rgb(15, 13, 117)', // Border color
-                        borderWidth: 2, // Border width
-                        borderRadius: 6, // Rounded bar corners
-                        barThickness: 100, // Fixed bar width
-                        maxBarThickness: 250, // Maximum bar width
-                        minBarLength: 2 // Minimum bar length
+                        label: 'Number of Submissions',
+                        data: documentValues,
+                        backgroundColor: backgroundColors,
+                        borderColor: borderColors,
+                        borderWidth: 2,
+                        borderRadius: 6,
+                        barThickness: 80
                     }]
                 },
                 options: {
-                    responsive: true, // Make chart responsive
-                    maintainAspectRatio: false, // Don't maintain aspect ratio
+                    responsive: true,
+                    maintainAspectRatio: false,
                     scales: {
-                        x: {
-                            grid: { display: false }, // Hide x-axis grid lines
-                            barPercentage: 0.4, // Control bar width
-                            categoryPercentage: 0.6 // Control space between categories
-                        },
                         y: {
-                            beginAtZero: true, // Start y-axis at 0
-                            ticks: { precision: 0 }, // No decimal places
-                            grid: { color: 'rgba(0, 0, 0, 0.05)' } // Light grid lines
+                            beginAtZero: true,
+                            ticks: { precision: 0 },
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                        },
+                        x: {
+                            grid: { display: false }
                         }
                     },
                     plugins: {
-                        legend: { display: false }, // Hide legend
-                        tooltip: { // Customize tooltips
+                        legend: { display: false },
+                        tooltip: {
                             backgroundColor: 'rgba(0, 0, 0, 0.8)',
                             titleFont: { size: 14, weight: 'bold' },
                             bodyFont: { size: 12 },
                             padding: 10,
-                            cornerRadius: 6
+                            cornerRadius: 6,
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw}`;
+                                }
+                            }
                         }
                     },
-                    layout: { // Add padding around chart
+                    layout: {
                         padding: { left: 10, right: 10, top: 10, bottom: 10 }
                     }
                 }
             });
         }
 
-        // Function to set up card hover effects
         function setupCardHover() {
-            const cards = document.querySelectorAll('.card'); // Get all card elements
+            const cards = document.querySelectorAll('.card');
             cards.forEach(card => {
-                // Add hover effects to cards
                 card.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-5px)'; // Lift card on hover
-                    this.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.12)'; // Enhance shadow
+                    this.style.transform = 'translateY(-5px)';
+                    this.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.12)';
                 });
                 
                 card.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(0)'; // Reset position
-                    this.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.08)'; // Reset shadow
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.08)';
                 });
             });
         }
 
-        // Function to set up export button handlers
         function setupExportButtons() {
-            document.getElementById('downloadCsv').addEventListener('click', downloadCSV); // CSV export
-            document.getElementById('downloadWord').addEventListener('click', downloadWord); // Word export
-            document.getElementById('printPage').addEventListener('click', printPage); // Print page
+            const downloadCsv = document.getElementById('downloadCsv');
+            const downloadWord = document.getElementById('downloadWord');
+            const printPage = document.getElementById('printPage');
+            
+            if (downloadCsv) downloadCsv.addEventListener('click', downloadCSV);
+            if (downloadWord) downloadWord.addEventListener('click', downloadWord);
+            if (printPage) printPage.addEventListener('click', printPage);
         }
 
-        // Function to download data as CSV
         function downloadCSV() {
-            let csvContent = "Strand,Student Count\n"; // CSV header
+            let csvContent = "Strand,Student Count\n";
             const strandData = <?php echo json_encode($strand_data); ?>;
             
-            // Add each strand's data to CSV
             for (const [strand, count] of Object.entries(strandData)) {
                 csvContent += `${strand},${count}\n`;
             }
             
-            // Create and trigger download
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -252,22 +250,20 @@ include 'sidebar.html';
             document.body.removeChild(link);
         }
 
-        // Function to handle Word export (placeholder)
         function downloadWord() {
             alert('Word export functionality would be implemented here.\nIn a real implementation, you would use a library like docx.js');
         }
 
-        // Function to handle page printing
         function printPage() {
             const elementsToHide = document.querySelectorAll('.sidebar, .user-profile, .btn');
-            elementsToHide.forEach(el => el.style.display = 'none'); // Hide elements for printing
+            elementsToHide.forEach(el => el.style.display = 'none');
             
-            document.querySelector('.main-content').style.marginLeft = '0'; // Adjust layout
-            window.print(); // Trigger print dialog
+            document.querySelector('.main-content').style.marginLeft = '0';
+            window.print();
             
             setTimeout(() => {
-                elementsToHide.forEach(el => el.style.display = ''); // Restore hidden elements
-                document.querySelector('.main-content').style.marginLeft = '260px'; // Reset layout
+                elementsToHide.forEach(el => el.style.display = '');
+                document.querySelector('.main-content').style.marginLeft = '260px';
             }, 500);
         }
     </script>
