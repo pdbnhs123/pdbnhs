@@ -1,66 +1,76 @@
 <?php
-// 1. Aggregated data: Strand and Grade distribution
-$distribution_sql = "SELECT 
-                        s.name AS Strand_Name, 
-                        s.grade AS Grade, 
-                        COUNT(st.student_id) AS Student_Count
-                    FROM 
-                        strands s
-                    LEFT JOIN 
-                        student_info st ON s.strand_id = st.strand_id
-                    GROUP BY 
-                        s.name, s.grade
-                    ORDER BY 
-                        s.grade, s.name";
+require_once 'db.php';
 
-$distribution_result = $conn->query($distribution_sql);
-
-$strand_data = [];
-$grade_data = [];
-$students_distribution = [];
-
-if ($distribution_result && $distribution_result->num_rows > 0) {
-    while ($row = $distribution_result->fetch_assoc()) {
-        $students_distribution[] = $row;
-
-        if (!isset($strand_data[$row['Strand_Name']])) {
-            $strand_data[$row['Strand_Name']] = 0;
-        }
-        $strand_data[$row['Strand_Name']] += $row['Student_Count'];
-
-        if (!isset($grade_data[$row['Grade']])) {
-            $grade_data[$row['Grade']] = 0;
-        }
-        $grade_data[$row['Grade']] += $row['Student_Count'];
+function getAllStudents(PDO $pdo): array {
+    $sql = "SELECT 
+        id,
+        student_type AS Student_Type,
+        full_name AS Full_Name,
+        gender AS Gender,
+        age AS Age,
+        strand AS Strand_Name,
+        city AS City,  
+        psa AS PSA,
+        form137 AS Form137,
+        good_moral AS Good_moral,
+        card AS Card
+    FROM student_info";
+    
+    try {
+        return $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error fetching students: " . $e->getMessage());
+        return [];
     }
 }
 
-// 2. Full student information
-$student_info_sql = "SELECT 
-                        st.student_id AS Student_ID,
-                        st.first_name AS First_Name,
-                        st.middle_name AS Middle_Name,
-                        st.last_name AS Last_Name,
-                        st.birthdate AS Birthdate,
-                        st.gender AS Gender,
-                        st.address AS Address,
-                        st.contact_number AS Contact_Number,
-                        s.name AS Strand_Name,
-                        s.grade AS Grade
-                    FROM 
-                        student_info st
-                    JOIN 
-                        strands s ON st.strand_id = s.strand_id
-                    ORDER BY 
-                        s.grade, s.name, st.last_name";
+function getStrandAndDocumentData(PDO $pdo): array {
+    $sql = "
+        SELECT 
+            strand,
+            COUNT(*) AS total_students,
+            SUM(PSA) AS psa_count,
+            SUM(Form137) AS form137_count,
+            SUM(Good_moral) AS good_moral_count,
+            SUM(Card) AS card_count
+        FROM 
+            student_info
+        GROUP BY 
+            strand
+    ";
 
-$student_info_result = $conn->query($student_info_sql);
+    $strand_data = [];
+    $document_totals = [
+        'PSA' => 0,
+        'Form137' => 0,
+        'Good Moral' => 0,
+        'Card' => 0
+    ];
 
-$all_students = [];
+    try {
+        $stmt = $pdo->query($sql);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $strand = $row['strand'];
+            $strand_data[$strand] = (int)$row['total_students'];
 
-if ($student_info_result && $student_info_result->num_rows > 0) {
-    while ($row = $student_info_result->fetch_assoc()) {
-        $all_students[] = $row;
+            // Sum up each document across strands
+            $document_totals['PSA'] += (int)$row['psa_count'];
+            $document_totals['Form137'] += (int)$row['form137_count'];
+            $document_totals['Good Moral'] += (int)$row['good_moral_count'];
+            $document_totals['Card'] += (int)$row['card_count'];
+        }
+    } catch (PDOException $e) {
+        error_log("Database error in getStrandAndDocumentData: " . $e->getMessage());
+        throw new RuntimeException("Failed to retrieve strand and document data.");
     }
+
+    return [
+        'strand_data' => $strand_data,
+        'document_data' => $document_totals
+    ];
 }
+
+$data = getStrandAndDocumentData($pdo);
+$strand_data = $data['strand_data'];
+$document_data = $data['document_data'];
 ?>
