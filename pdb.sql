@@ -1,13 +1,14 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 4.9.0.1
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1
--- Generation Time: Apr 28, 2025 at 02:13 AM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.0.30
+-- Host: sql303.iceiy.com
+-- Generation Time: May 04, 2025 at 08:31 PM
+-- Server version: 10.6.19-MariaDB
+-- PHP Version: 7.2.22
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET AUTOCOMMIT = 0;
 START TRANSACTION;
 SET time_zone = "+00:00";
 
@@ -18,30 +19,35 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `pdb`
+-- Database: `icei_38874221_pdb`
 --
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `strands`
+-- Table structure for table `admin_users`
 --
 
-CREATE TABLE `strands` (
-  `strand_id` int(11) NOT NULL,
-  `name` enum('ABM','STEM') NOT NULL,
-  `grade` enum('11','12') NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+CREATE TABLE `admin_users` (
+  `id` int(11) NOT NULL,
+  `username` varchar(255) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `full_name` varchar(255) NOT NULL,
+  `last_login` datetime DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 --
--- Dumping data for table `strands`
+-- Dumping data for table `admin_users`
 --
 
-INSERT INTO `strands` (`strand_id`, `name`, `grade`) VALUES
-(1, 'ABM', '11'),
-(3, 'ABM', '12'),
-(2, 'STEM', '11'),
-(4, 'STEM', '12');
+INSERT INTO `admin_users` (`id`, `username`, `password`, `full_name`, `last_login`, `created_at`, `updated_at`) VALUES
+(1, 'Grace123', '$2y$10$qT3Yd2KpidayacBilJwzjODTxxL10a9R6YiPRMVy5tFqwl/U.CXe.', 'Grace Dayupay, Lipit', NULL, '2025-05-02 01:25:45', '2025-05-02 01:25:45'),
+(2, 'Jay123', '$2y$10$0e.YW.EUZ2QKCcMtLY6ivORxfiZu5yXiPFrWx4dJeXRLUCWgLmzHC', 'Jay Layam, Paclauna', '2025-05-04 08:41:44', '2025-05-02 01:26:01', '2025-05-04 08:41:44'),
+(3, 'Jhon123', '$2y$10$YGs9x9nYct3YcfR0HK21seVQYAZyBJAg7ilSio4dXX5zbUkdXaO5m', 'Jhon Philip Del Rosario, Par', NULL, '2025-05-02 01:26:34', '2025-05-02 01:26:34'),
+(4, 'Jeff123', '$2y$10$5GgTng8HONykNgVlmYwEEuVIIoKnKbdSIx.hVuMKFK0kfsd7Az4wS', 'Jeffrey Romero, Salabao', NULL, '2025-05-02 01:28:17', '2025-05-02 01:28:17'),
+(5, 'Aldrin123', '$2y$10$UAkuJswRUV0924OSsyWVn.v5x19vdkzS16Yh3bIbOJL.Kf8lGy4vu', 'Aldrin Miaga, Arabia', '2025-05-04 23:59:45', '2025-05-02 01:28:49', '2025-05-04 23:59:45');
 
 -- --------------------------------------------------------
 
@@ -50,86 +56,47 @@ INSERT INTO `strands` (`strand_id`, `name`, `grade`) VALUES
 --
 
 CREATE TABLE `student_info` (
-  `student_id` int(11) NOT NULL,
-  `first_name` varchar(50) NOT NULL,
-  `last_name` varchar(50) NOT NULL,
-  `birthdate` date NOT NULL,
+  `id` int(11) NOT NULL,
+  `student_type` varchar(50) NOT NULL,
+  `full_name` varchar(100) NOT NULL,
   `gender` enum('Male','Female','Other') NOT NULL,
-  `address` varchar(100) NOT NULL,
-  `contact_number` varchar(20) NOT NULL,
-  `strand_id` int(11) NOT NULL,
-  `Middle_Name` varchar(100) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `age` int(11) DEFAULT NULL
+) ;
 
 --
 -- Dumping data for table `student_info`
 --
 
-INSERT INTO `student_info` (`student_id`, `first_name`, `last_name`, `birthdate`, `gender`, `address`, `contact_number`, `strand_id`, `Middle_Name`) VALUES
-(1, 'Juan', 'Dela Cruz', '2006-05-15', 'Male', '123 Manila St', '09123456789', 1, NULL),
-(2, 'Maria', 'Santos', '2006-07-21', 'Female', '456 Quezon Ave', '09234567890', 1, NULL),
-(3, 'Pedro', 'Reyes', '2006-02-10', 'Male', '789 Makati City', '09345678901', 1, NULL),
-(4, 'Ana', 'Lopez', '2006-11-30', 'Female', '321 Taguig St', '09456789012', 2, NULL),
-(5, 'Luis', 'Gonzales', '2006-09-25', 'Male', '654 Pasig Blvd', '09567890123', 2, NULL),
-(6, 'Sofia', 'Martinez', '2006-04-18', 'Female', '987 Mandaluyong Rd', '09678901234', 2, NULL),
-(7, 'Carlos', 'Torres', '2005-08-12', 'Male', '111 Paranaque Ln', '09789012345', 3, NULL),
-(8, 'Isabel', 'Rivera', '2005-03-05', 'Female', '222 Las Pinas Ave', '09890123456', 3, NULL),
-(9, 'Andres', 'Fernandez', '2005-12-19', 'Male', '333 Valenzuela St', '09901234567', 3, NULL),
-(10, 'Elena', 'Ramirez', '2005-06-22', 'Female', '444 Marikina Way', '09112345678', 4, NULL),
-(11, 'Javier', 'Ortiz', '2005-01-14', 'Male', '555 San Juan Dr', '09223456789', 4, NULL),
-(12, 'Carmen', 'Vargas', '2005-10-08', 'Female', '666 Pasay Blvd', '09334567890', 4, NULL),
-(13, 'Miguel', 'Castillo', '2006-03-17', 'Male', '777 Cainta Rd', '09445678901', 1, NULL),
-(14, 'Andrea', 'Salazar', '2006-09-28', 'Female', '888 Antipolo St', '09556789012', 2, NULL),
-(15, 'Ricardo', 'Mendoza', '2005-07-11', 'Male', '999 Taytay Ave', '09667890123', 3, NULL),
-(16, 'Gabriela', 'Castro', '2005-04-03', 'Female', '101 Binangonan Ln', '09778901234', 4, NULL),
-(17, 'Felipe', 'Aquino', '2006-12-09', 'Male', '202 Angono Way', '09889012345', 1, NULL),
-(18, 'Beatriz', 'Bautista', '2006-08-24', 'Female', '303 Rodriguez Dr', '09990123456', 2, NULL),
-(19, 'Alfredo', 'Villanueva', '2005-11-16', 'Male', '404 San Mateo St', '09101234567', 3, NULL),
-(20, 'Rosario', 'Estrada', '2005-02-07', 'Female', '505 Montalban Ave', '09212345678', 4, NULL);
+INSERT INTO `student_info` (`id`, `student_type`, `full_name`, `gender`, `age`, `strand`, `city`, `psa`, `form137`, `good_moral`, `card`, `submitted_at`) VALUES
+(1, 'transferee', 'Arabia, Aldrin Miaga.', 'Male', 21, 'STEM', 'Valenzuela City', 1, 0, 1, 0, '2025-05-04 02:34:24'),
+(2, 'transferee', 'Akemi', 'Female', 20, 'ABM', 'Quezon City', 0, 1, 0, 1, '2025-05-04 02:36:33');
 
 --
 -- Indexes for dumped tables
 --
 
 --
--- Indexes for table `strands`
+-- Indexes for table `admin_users`
 --
-ALTER TABLE `strands`
-  ADD PRIMARY KEY (`strand_id`),
-  ADD UNIQUE KEY `unique_strand` (`name`,`grade`);
-
---
--- Indexes for table `student_info`
---
-ALTER TABLE `student_info`
-  ADD PRIMARY KEY (`student_id`),
-  ADD KEY `strand_id` (`strand_id`);
+ALTER TABLE `admin_users`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `username` (`username`);
 
 --
 -- AUTO_INCREMENT for dumped tables
 --
 
 --
--- AUTO_INCREMENT for table `strands`
+-- AUTO_INCREMENT for table `admin_users`
 --
-ALTER TABLE `strands`
-  MODIFY `strand_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+ALTER TABLE `admin_users`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `student_info`
 --
 ALTER TABLE `student_info`
-  MODIFY `student_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
-
---
--- Constraints for dumped tables
---
-
---
--- Constraints for table `student_info`
---
-ALTER TABLE `student_info`
-  ADD CONSTRAINT `student_info_ibfk_1` FOREIGN KEY (`strand_id`) REFERENCES `strands` (`strand_id`);
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
