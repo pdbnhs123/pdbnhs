@@ -1,0 +1,516 @@
+<?php
+require_once 'security.php';
+require_once 'db.php';
+require_once 'information.php';
+
+// Get data
+$data = getStrandAndDocumentData($pdo);
+$document_data = $data['document_data'];
+$all_students = getAllStudents($pdo);
+
+include 'sidebar.html';
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Information</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- For PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            background-color:rgb(172, 173, 191);
+            color: #ffffff;
+            border-radius: 12px;
+            padding: 1.2rem 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            border-bottom: 4px solidrgb(6, 28, 88);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .input-group-sm .form-control {
+            border-radius: 0.5rem;
+        }
+
+        .input-group-text {
+            background-color: #e9ecef;
+            border: none;
+        }
+
+        .btn-outline-primary,
+        .btn-outline-success,
+        .btn-outline-danger,
+        .btn-outline-dark {
+            font-size: 0.9rem;
+            padding: 0.5rem 1.25rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .student-table-section {
+            margin: 0 1.5rem 2rem;
+        }
+
+        .table-responsive {
+            background: #ffffff;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+        }
+
+        table.table {
+            font-size: 1rem;
+            border-collapse: collapse;
+        }
+
+        .table thead th {
+            background-color:rgb(11, 33, 112);
+            color: #ffffff;
+            text-align: center;
+            padding: 0.75rem;
+        }
+
+        .table tbody td {
+            vertical-align: middle;
+            text-align: center;
+            padding: 0.75rem;
+        }
+
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: #f1f3f5;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: #e2f0ea;
+        }
+
+        .document-status.present {
+            color: #198754;
+            font-weight: 600;
+        }
+
+        .document-status.missing {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .btn {
+                margin-top: 0.5rem;
+                width: 100%;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            .input-group .form-control {
+                width: 100%;
+            }
+
+            .table-responsive {
+                overflow-x: auto;
+                padding: 1rem;
+            }
+        }
+
+        /* Search Bar Styles */
+.search-container {
+    position: relative;
+    max-width: 400px;
+    margin-left: auto;
+}
+
+.search-input-group {
+    position: relative;
+    border-radius: 50px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.search-input-group:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.search-input-group .input-group-text {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    color: white;
+    border: none;
+    z-index: 2;
+    padding: 0 1.25rem;
+    border-top-left-radius: 50px;
+    border-bottom-left-radius: 50px;
+}
+
+.search-input-group .form-control {
+    padding-left: 3.5rem;
+    height: 45px;
+    border: none;
+    background-color: #fff;
+    box-shadow: none;
+    font-size: 0.95rem;
+    border-radius: 50px !important;
+    transition: all 0.3s ease;
+}
+
+.search-input-group .form-control:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+.search-input-group .bi-search {
+    width: 18px;
+    height: 18px;
+    fill: white;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .search-container {
+        max-width: 100%;
+        margin-bottom: 1rem;
+    }
+    
+    .search-input-group .form-control {
+        height: 40px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Dark mode variant (optional) */
+.dark-mode .search-input-group .form-control {
+    background-color: #2d3748;
+    color: #f7fafc;
+}
+
+.dark-mode .search-input-group .input-group-text {
+    background: linear-gradient(135deg, #4338ca, #4f46e5);
+}
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <header class="header">
+            <h1>Student Information</h1>
+        </header>
+        <div class="row mb-3">
+        <div class="col-md-4 text-end">
+    <div class="search-container">
+        <div class="input-group search-input-group">
+            <span class="input-group-text">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.397h-.001l3.85 3.85a1 1 0 0 0 
+                        1.415-1.415l-3.85-3.85zm-5.242.656a5.5 5.5 0 
+                        1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
+                </svg>
+            </span>
+            <input type="text" id="searchInput" onkeyup="searchTable()" class="form-control" placeholder="Search students...">
+        </div>
+    </div>
+</div>
+            <div class="col-md-8 text-end">
+                <div class="d-flex justify-content-end">
+                    <button class="btn btn-outline-primary me-2" onclick="downloadCSV()">CSV</button>
+                    <button class="btn btn-outline-success me-2" onclick="downloadWord()">Word</button>
+                    <button class="btn btn-outline-danger me-2" onclick="downloadPDF()">PDF</button>
+                    <button class="btn btn-outline-dark" onclick="window.print()">Print</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Student Table -->
+        <section class="student-table-section">
+            <div class="table-responsive">
+                <table id="studentTable" class="table table-bordered table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Student Type</th>
+                            <th>Full Name</th>
+                            <th>Gender</th>
+                            <th>Age</th>
+                            <th>Grade Level</th>
+                            <th>Strand</th>
+                            <th>City</th>
+                            <th>PSA</th>
+                            <th>Form 137</th>
+                            <th>Good Moral</th>
+                            <th>Card</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($all_students as $student): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($student['Student_Type'] ?? 'Regular') ?></td>
+                            <td><?= htmlspecialchars($student['Full_Name']) ?></td>
+                            <td><?= htmlspecialchars($student['Gender']) ?></td>
+                            <td><?= htmlspecialchars($student['Age']) ?></td>
+                            <td>Grade <?= isset($student['grade_level']) ? htmlspecialchars($student['grade_level']) : 'N/A' ?></td>
+                            <td><?= htmlspecialchars($student['Strand_Name']) ?></td>
+                            <td><?= htmlspecialchars($student['City']) ?></td>
+                            <td class="document-status <?= $student['PSA'] ? 'present' : 'missing' ?>">
+                                <?= $student['PSA'] ? '✓ Present' : '✗ Missing' ?>
+                            </td>
+                            <td class="document-status <?= $student['Form137'] ? 'present' : 'missing' ?>">
+                                <?= $student['Form137'] ? '✓ Present' : '✗ Missing' ?>
+                            </td>
+                            <td class="document-status <?= $student['Good_moral'] ? 'present' : 'missing' ?>">
+                                <?= $student['Good_moral'] ? '✓ Present' : '✗ Missing' ?>
+                            </td>
+                            <td class="document-status <?= $student['Card'] ? 'present' : 'missing' ?>">
+                                <?= $student['Card'] ? '✓ Present' : '✗ Missing' ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script>
+    // Function to download CSV
+    function downloadCSV() {
+        try {
+            const rows = [
+                ["Student Type", "Full Name", "Gender", "Age", "Grade Level", "Strand", "City", "PSA", "Form 137", "Good Moral", "Card"],
+                <?php foreach ($all_students as $s): ?>
+                [
+                    "<?= addslashes($s['Student_Type'] ?? 'Regular') ?>",
+                    "<?= addslashes($s['Full_Name']) ?>",
+                    "<?= addslashes($s['Gender']) ?>",
+                    "<?= $s['Age'] ?>",
+                    "Grade <?= addslashes($s['grade_level']) ?>",
+                    "<?= addslashes($s['Strand_Name']) ?>",
+                    "<?= addslashes($s['City']) ?>",
+                    "<?= $s['PSA'] ? 'Present' : 'Missing' ?>",
+                    "<?= $s['Form137'] ? 'Present' : 'Missing' ?>",
+                    "<?= $s['Good_moral'] ? 'Present' : 'Missing' ?>",
+                    "<?= $s['Card'] ? 'Present' : 'Missing' ?>"
+                ],
+                <?php endforeach; ?>
+            ];
+            
+            let csvContent = rows.map(row => 
+                row.map(field => "${field}").join(",")
+            ).join("\n");
+            
+            let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            let link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "student_report_" + new Date().toISOString().slice(0,10) + ".csv";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error("Error generating CSV:", error);
+            alert("Error generating CSV file. Please check console for details.");
+        }
+    }
+
+    // Function to download Word document
+    function downloadWord() {
+        try {
+            let htmlContent = `
+            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+            <head>
+                <title>Student Information Report</title>
+                <style>
+                    table { border-collapse: collapse; width: 100%; }
+                    th, td { border: 1px solid #000; padding: 5px; }
+                    th { background-color: #f2f2f2; }
+                </style>
+            </head>
+            <body>
+                <h2>Student Information Report</h2>
+                <table>
+                    <tr>
+                        <th>Student Type</th><th>Full Name</th><th>Gender</th><th>Age</th>
+                        <th>Grade Level</th><th>Strand</th><th>City</th><th>PSA</th>
+                        <th>Form 137</th><th>Good Moral</th><th>Card</th>
+                    </tr>
+                    <?php foreach ($all_students as $s): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($s['Student_Type'] ?? 'Regular') ?></td>
+                        <td><?= htmlspecialchars($s['Full_Name']) ?></td>
+                        <td><?= htmlspecialchars($s['Gender']) ?></td>
+                        <td><?= $s['Age'] ?></td>
+                        <td>Grade <?= htmlspecialchars($s['grade_level']) ?></td>
+                        <td><?= htmlspecialchars($s['Strand_Name']) ?></td>
+                        <td><?= htmlspecialchars($s['City']) ?></td>
+                        <td><?= $s['PSA'] ? '✓ Present' : '✗ Missing' ?></td>
+                        <td><?= $s['Form137'] ? '✓ Present' : '✗ Missing' ?></td>
+                        <td><?= $s['Good_moral'] ? '✓ Present' : '✗ Missing' ?></td>
+                        <td><?= $s['Card'] ? '✓ Present' : '✗ Missing' ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </table>
+                <p>Generated on: ${new Date().toLocaleString()}</p>
+            </body>
+            </html>
+            `;
+
+            let blob = new Blob(['\ufeff', htmlContent], { 
+                type: 'application/msword;charset=utf-8' 
+            });
+            let link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "student_report_" + new Date().toISOString().slice(0,10) + ".doc";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error("Error generating Word document:", error);
+            alert("Error generating Word document. Please check console for details.");
+        }
+    }
+
+    // Function to download PDF (requires jsPDF library)
+    async function downloadPDF() {
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape');
+            
+            // Add title
+            doc.setFontSize(16);
+            doc.text("Student Information Report", 14, 15);
+            doc.setFontSize(10);
+            doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 22);
+            
+            // Prepare table data
+            const headers = [
+                "Student Type",
+                "Full Name",
+                "Gender",
+                "Age",
+                "Grade Level",
+                "Strand",
+                "City",
+                "PSA",
+                "Form 137",
+                "Good Moral",
+                "Card"
+            ];
+            
+            const data = [
+                <?php foreach ($all_students as $s): ?>
+                [
+                    "<?= addslashes($s['Student_Type'] ?? 'Regular') ?>",
+                    "<?= addslashes($s['Full_Name']) ?>",
+                    "<?= addslashes($s['Gender']) ?>",
+                    "<?= $s['Age'] ?>",
+                    "Grade <?= addslashes($s['grade_level']) ?>",
+                    "<?= addslashes($s['Strand_Name']) ?>",
+                    "<?= addslashes($s['City']) ?>",
+                    "<?= $s['PSA'] ? 'Present' : 'Missing' ?>",
+                    "<?= $s['Form137'] ? 'Present' : 'Missing' ?>",
+                    "<?= $s['Good_moral'] ? 'Present' : 'Missing' ?>",
+                    "<?= $s['Card'] ? 'Present' : 'Missing' ?>"
+                ],
+                <?php endforeach; ?>
+            ];
+            
+            // Add table using autoTable plugin
+            doc.autoTable({
+                head: [headers],
+                body: data,
+                startY: 25,
+                styles: {
+                    fontSize: 8,
+                    cellPadding: 2,
+                    overflow: 'linebreak'
+                },
+                columnStyles: {
+                    0: { cellWidth: 'auto' },
+                    1: { cellWidth: 'auto' },
+                    2: { cellWidth: 'auto' },
+                    3: { cellWidth: 'auto' },
+                    4: { cellWidth: 'auto' },
+                    5: { cellWidth: 'auto' },
+                    6: { cellWidth: 'auto' },
+                    7: { cellWidth: 'auto' },
+                    8: { cellWidth: 'auto' },
+                    9: { cellWidth: 'auto' },
+                    10: { cellWidth: 'auto' }
+                }
+            });
+            
+            doc.save("student_report_" + new Date().toISOString().slice(0,10) + ".pdf");
+        } catch (error) {
+            console.error("Error generating PDF:", error);
+            alert("Error generating PDF. Make sure jsPDF is loaded and check console for details.");
+        }
+    }
+
+    // Function to search the table
+    function searchTable() {
+        try {
+            let input = document.getElementById("searchInput");
+            let filter = input.value.toLowerCase();
+            let table = document.getElementById("studentTable");
+            let tr = table.getElementsByTagName("tr");
+
+            for (let i = 1; i < tr.length; i++) {
+                let tds = tr[i].getElementsByTagName("td");
+                let match = false;
+                
+                for (let j = 0; j < tds.length; j++) {
+                    if (tds[j]) {
+                        let text = tds[j].textContent || tds[j].innerText;
+                        if (text.toLowerCase().includes(filter)) {
+                            match = true;
+                            break;
+                        }
+                    }
+                }
+                
+                tr[i].style.display = match ? "" : "none";
+            }
+        } catch (error) {
+            console.error("Error in search:", error);
+        }
+    }
+
+    // Add event listener for Enter key in search
+    document.getElementById("searchInput").addEventListener("keyup", function(event) {
+        if (event.key === "Enter") {
+            searchTable();
+        }
+    });
+    </script>
+</body>
+</html>
