@@ -1,4 +1,5 @@
 <?php
+
 require_once 'security.php'; // security headers & nonce
 require_once 'config.php';   // session & common setup
 require_once 'db.php';       // $pdo setup
@@ -6,6 +7,11 @@ require_once 'db.php';       // $pdo setup
 // CSRF Token setup
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+$username = '';
+if (isset($_SESSION['admin_logged_in'])) {
+    header("Location: dashboard.php");
+    exit();
 }
 
 $MAX_ATTEMPTS = 5;
@@ -85,213 +91,179 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Favicon Configuration -->
+    <!-- Standard ICO format (fallback) -->
+    <link rel="icon" href="img/pdb.png" type="image/x-icon">
+    
+    <!-- Modern browsers (PNG format) -->
+    <link rel="icon" type="image/png" sizes="32x32" href="img/pdb.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="img/pdb.png">
+    
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png">
+    
+    <!-- Windows Metro -->
+    <meta name="msapplication-TileColor" content="#0d265c">
+    <meta name="msapplication-TileImage" content="img/pdb.png">
+    
     <title>Admin Login</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
     <style>
-            :root {
-            --primary: #4361ee;
-            --primary-dark: #3a56d4;
-            --secondary: #3f37c9;
-            --dark: #1f2937;
-            --light: #f9fafb;
-            --gray: #6b7280;
-            --danger: #ef4444;
-            --success: #10b981;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            --rounded: 0.5rem;
-            --rounded-lg: 0.75rem;
-            --transition: all 0.2s ease;
+        :root {
+            --sidebar-width: 260px;
+            --sidebar-blue: #0d265c;
+            --sidebar-dark: #293fad;
+            --sidebar-text: rgba(255, 255, 255, 0.95);
+            --sidebar-active: rgba(255, 255, 255, 0.15);
+            --content-bg: #f5f7ff;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --transition-speed: 0.3s;
+            --primary: #2745a5;
+            --success: #28a745;
+            --border-radius: 12px;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
         }
-        
-        body {
-            background-color: var(--light);
+
+        /* LOGIN PAGE STYLES */
+        body.login-page {
             display: flex;
+            min-height: 100vh;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            background-color: var(--content-bg);
+            background-image: url('https://cache.1ms.net/1920x1200/abstract-blue-1920x1200_101920.jpg');
+            background-size: cover;
+            background-position: center;
+            padding: 20px;
         }
-        
-        .login-container {
-            background-color: var(--light);
-            padding: 3rem;
-            border-radius: var(--rounded-lg);
-            box-shadow: var(--shadow-md);
-            width: 100%;
-            max-width: 28rem;
-            position: relative;
-            overflow: hidden;
+
+        body.login-page::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(13, 38, 92, 0.7);
             z-index: 1;
         }
 
-        .login-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
+        .login-container {
+            max-width: 420px;
             width: 100%;
-            height: 0.5rem;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            z-index: -1;
-        }
-        
-        .logo {
+            padding: 2.5rem;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             text-align: center;
-            margin-bottom: 2.5rem;
+            position: relative;
+            z-index: 2;
         }
-        
-        .logo img {
-            width: 5rem;
+
+        .login-container .logo {
+            margin-bottom: 2rem;
+        }
+
+        .login-container .logo img {
+            width: 80px;
             height: auto;
-            margin-bottom: 1.25rem;
+            margin-bottom: 1rem;
         }
-        
-        .logo h2 {
-            color: var(--dark);
+
+        .login-container h2 {
+            color: var(--sidebar-blue);
             font-weight: 600;
-            font-size: 1.75rem;
             margin-bottom: 0.5rem;
         }
 
-        .logo p {
-            color: var(--gray);
-            font-size: 0.95rem;
-        }
-        
         .form-group {
-            margin-bottom: 1.75rem;
-            position: relative;
+            margin-bottom: 1.5rem;
+            text-align: left;
         }
-        
+
         .form-group label {
             display: block;
-            margin-bottom: 0.75rem;
-            color: var(--dark);
+            margin-bottom: 0.5rem;
             font-weight: 500;
-            font-size: 0.95rem;
+            color: var(--text-dark);
         }
-        
+
         .form-group input {
             width: 100%;
-            padding: 1rem 1.25rem;
-            border: 1px solid #e5e7eb;
-            border-radius: var(--rounded);
-            font-size: 1rem;
-            transition: var(--transition);
-            background-color: white;
-            box-shadow: var(--shadow-sm);
+            padding: 0.8rem 1rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
         }
-        
+
         .form-group input:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
-        }
-
-        .form-group input::placeholder {
-            color: #9ca3af;
+            box-shadow: 0 0 0 3px rgba(74, 107, 255, 0.15);
         }
 
         .password-container {
-    position: relative;
-}
-
-#togglePassword {
-    position: absolute;
-    right: 10px;  /* Adjust this based on your design */
-    top: 50%;
-    transform: translateY(-50%);
-    color: #aaa;
-    cursor: pointer;
-    font-size: 1.2rem;
-    transition: 0.2s;
-}
-
-#togglePassword:hover {
-    color: #333;
-}
-
-        .password-container i:hover {
-            color: var(--dark);
+            position: relative;
         }
-        
+
+        .password-container #togglePassword {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: var(--text-light);
+            top: 70%;
+        }
+
         .btn {
             width: 100%;
-            padding: 1.1rem;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary), var(--sidebar-dark));
             color: white;
             border: none;
-            border-radius: var(--rounded);
-            font-size: 1rem;
-            font-weight: 600;
+            border-radius: 8px;
+            font-weight: 500;
             cursor: pointer;
-            transition: var(--transition);
-            margin-top: 0.5rem;
-            box-shadow: 0 4px 6px -1px rgba(67, 97, 238, 0.3), 0 2px 4px -1px rgba(67, 97, 238, 0.1);
-        }
-        
-        .btn:hover {
-            background: linear-gradient(135deg, var(--primary-dark), var(--secondary));
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(67, 97, 238, 0.3), 0 4px 6px -2px rgba(67, 97, 238, 0.1);
+            transition: all 0.3s ease;
         }
 
-        .btn:active {
-            transform: translateY(0);
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
-        
+
         .error {
-            color: var(--danger);
+            color: #dc3545;
+            background: #f8d7da;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
             margin-bottom: 1.5rem;
             text-align: center;
-            padding: 1rem;
-            background-color: rgba(239, 68, 68, 0.05);
-            border-radius: var(--rounded);
-            font-weight: 500;
-            border: 1px solid rgba(239, 68, 68, 0.2);
-        }
-
-        .forgot-password {
-            text-align: right;
-            margin: -1rem 0 1.5rem;
-        }
-
-        .forgot-password a {
-            color: var(--gray);
-            font-size: 0.875rem;
-            text-decoration: none;
-            transition: var(--transition);
-            font-weight: 500;
-        }
-
-        .forgot-password a:hover {
-            color: var(--primary);
         }
 
         @media (max-width: 480px) {
             .login-container {
-                padding: 2.5rem 1.5rem;
-                margin: 0 1rem;
-                border-radius: var(--rounded);
+                padding: 1.5rem;
             }
         }
-        </style>
+    </style>
 </head>
-<body>
+<body class="login-page">
     <div class="login-container">
         <div class="logo">
             <img src="./img/pdb.png" alt="Logo">
-            <h2>Welcome Back</h2>
+            <h2>Welcome Back!</h2>
         </div>
         
         <?php if (!empty($error)): ?>
@@ -303,27 +275,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" id="username" name="username"  required value="<?= htmlspecialchars($username ?? '') ?>">
+                <input type="text" id="username" name="username" placeholder="Username" required value="<?= htmlspecialchars($username ?? '') ?>">
             </div>
 
             <div class="form-group password-container">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
+                <input type="password" id="password" name="password" placeholder="Password" required>
                 <i class="fas fa-eye" id="togglePassword"></i>
             </div>
 
             <button type="submit" class="btn">Sign In</button>
         </form>
     </div>
-<script>
-    // Password visibility toggle
-    document.querySelector('#togglePassword').addEventListener('click', function() {
-        const passwordField = document.querySelector('#password');
-        const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
-        passwordField.setAttribute('type', type);
-        this.classList.toggle('fa-eye-slash');
-    });</script>
-
-
+    <script>
+        // Password visibility toggle
+        document.querySelector('#togglePassword').addEventListener('click', function() {
+            const passwordField = document.querySelector('#password');
+            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordField.setAttribute('type', type);
+            this.classList.toggle('fa-eye-slash');
+        });
+    </script>
 </body>
 </html>
