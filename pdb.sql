@@ -56,12 +56,20 @@ INSERT INTO `admin_users` (`id`, `username`, `password`, `full_name`, `last_logi
 --
 
 CREATE TABLE `student_info` (
-  `id` int(11) NOT NULL,
-  `student_type` varchar(50) NOT NULL,
-  `full_name` varchar(100) NOT NULL,
-  `gender` enum('Male','Female','Other') NOT NULL,
-  `age` int(11) DEFAULT NULL
-) ;
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    student_type VARCHAR(50) NOT NULL,
+    full_name VARCHAR(100) NOT NULL,
+    gender ENUM('Male', 'Female') NOT NULL,
+    age INT NOT NULL,
+    strand ENUM('ABM'. 'STEM') NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    psa TINYINT(1) DEFAULT 0,         -- 1 for submitted, 0 for not
+    form137 TINYINT(1) DEFAULT 0,
+    good_moral TINYINT(1) DEFAULT 0,
+    card TINYINT(1) DEFAULT 0,
+    submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 
 --
 -- Dumping data for table `student_info`
