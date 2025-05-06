@@ -307,27 +307,174 @@ function shadeColor(color, percent) {
 
 // Existing functions (keep these the same as in your original code)
 function initializeSidebar() {
-    // ... your existing sidebar code ...
+  const menuItems = document.querySelectorAll('.menu-item');
+        
+        menuItems.forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                this.querySelector('i').style.transform = 'translateX(5px)';
+            });
+            
+            item.addEventListener('mouseleave', function() {
+                this.querySelector('i').style.transform = 'translateX(0)';
+            });
+            
+            item.addEventListener('click', function(e) {
+                menuItems.forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                
+                const rect = this.getBoundingClientRect();
+                const ripple = document.createElement('span');
+                ripple.classList.add('ripple');
+                ripple.style.left = (e.clientX - rect.left) + 'px';
+                ripple.style.top = (e.clientY - rect.top) + 'px';
+                this.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 800);
+            });
+        });
+        
+        let resizeTimer;
+        window.addEventListener('resize', function() {
+            document.body.classList.add('resize-animation-stopper');
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                document.body.classList.remove('resize-animation-stopper');
+            }, 400);
+        });
+    }
+
+    function initializeDocumentChart() {
+        const chartEl = document.getElementById('documentChart');
+        if (!chartEl) {
+            console.error("Chart element not found");
+            return;
+        }
+
+        // Destroy previous chart if exists
+        if (chartEl.chart) {
+            chartEl.chart.destroy();
+        }
+
+        const documentData = <?php echo json_encode($document_data, JSON_HEX_TAG); ?>;
+        
+        // Debug: Check what data we're getting
+        console.log("Document Data:", documentData);
+        
+        if (!documentData || Object.keys(documentData).length === 0) {
+            chartEl.innerHTML = '<p class="text-muted">No document data available</p>';
+            console.warn("No document data available");
+            return;
+        }
+
+        const documentLabels = Object.keys(documentData);
+        const documentValues = Object.values(documentData);
+
+        const backgroundColors = [
+            '#007bff', '#28a745', '#ffc107', '#dc3545', 
+            '#6f42c1', '#fd7e14', '#20c997', '#e83e8c'
+        ].slice(0, documentLabels.length);
+        
+        const borderColors = [
+            '#0056b3', '#1c7430', '#d39e00', '#bd2130',
+            '#5a3d8a', '#d5670d', '#17a673', '#c5306d'
+        ].slice(0, documentLabels.length);
+
+        const ctx = chartEl.getContext('2d');
+        chartEl.chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: documentLabels,
+                datasets: [{
+                    label: 'Number of Submissions',
+                    data: documentValues,
+                    backgroundColor: backgroundColors,
+                    borderColor: borderColors,
+                    borderWidth: 2,
+                    borderRadius: 6,
+                    barThickness: 80
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 },
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFont: { size: 14, weight: 'bold' },
+                        bodyFont: { size: 12 },
+                        padding: 10,
+                        cornerRadius: 6,
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.raw;
+                            }
+                        }
+                    }
+                },
+                layout: {
+                    padding: { left: 10, right: 10, top: 10, bottom: 10 }
+                }
+            }
+        });.
 }
 
 function setupCardHover() {
-    // ... your existing card hover code ...
+    const downloadCsv = document.getElementById('downloadCsv');
+        const downloadWord = document.getElementById('downloadWord');
+        const printPage = document.getElementById('printPage');
+        
+        if (downloadCsv) downloadCsv.addEventListener('click', downloadCSV);
+        if (downloadWord) downloadWord.addEventListener('click', downloadWord);
+        if (printPage) printPage.addEventListener('click', printPage);
 }
 
 function setupExportButtons() {
-    // ... your existing export buttons code ...
-}
+  let csvContent = "Strand,Student Count\n";
+        const strandData = <?php echo json_encode($strand_data); ?>;
+        
+        for (const [strand, count] of Object.entries(strandData)) {
+            csvContent += strand + ',' + count + '\n';
+        }
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'strand_distribution.csv');
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
 
 function downloadCSV() {
     // ... your existing CSV download code ...
 }
 
 function downloadWord() {
-    // ... your existing Word export code ...
+    alert('Word export functionality would be implemented here.\nIn a real implementation, you would use a library like docx.js');
 }
 
 function printPage() {
-    // ... your existing print code ...
+      const elementsToHide = document.querySelectorAll('.sidebar, .user-profile, .btn');
+        elementsToHide.forEach(el => el.style.display = 'none');
+        
+        document.querySelector('.main-content').style.marginLeft = '0';
+        window.print();
+        
+        setTimeout(() => {
+            elementsToHide.forEach(el => el.style.display = '');
+            document.querySelector('.main-content').style.marginLeft = '260px';
+        }, 500);
 }
 </script>
 </body>
