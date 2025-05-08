@@ -1,0 +1,153 @@
+/* Reset some default styles for consistency */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  /* Body styles for fullscreen centering and dark bluish background */
+  body.login-page {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #213448, #547792, #94B4C1);
+    /* Deep bluish gradient */
+    color: #333;
+    padding: 20px;
+  }
+  
+  /* Login container styling with background and shadow */
+  .login-container {
+    background: #fff;
+    padding: 40px 30px;
+    max-width: 400px;
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .login-container:hover {
+    box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+    transform: translateY(-2px);
+  }
+  
+  /* Logo styling */
+  .logo {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .logo img {
+    width: 80px;
+    height: auto;
+  }
+  .logo h2 {
+    margin-top: 15px;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: #2c3e50;
+  }
+  
+  /* Error message styles */
+  .error {
+    background-color: #f44336;
+    color: #fff;
+    padding: 12px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+  }
+  
+  /* Form styles */
+  form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Form groups */
+  .form-group {
+    margin-bottom: 20px;
+    position: relative;
+  }
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: #34495e;
+  }
+  input[type="text"],
+  input[type="password"] {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.25s, box-shadow 0.25s;
+  }
+  input[type="text"]:focus,
+  input[type="password"]:focus {
+    border-color: #3498db; /* Soft blue focus border */
+    box-shadow: 0 0 8px rgba(52, 152, 219, 0.2);
+  }
+  
+  /* Password toggle eye icon positioning */
+  .password-container {
+    position: relative;
+  }
+  #togglePassword {
+    position: absolute;
+    top: 70%;
+    right: 16px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #555;
+    font-size: 1.2em;
+    transition: color 0.3s;
+  }
+  #togglePassword:hover {
+    color: #222;
+  }
+  
+  /* Submit button styling */
+  .btn {
+    padding: 14px;
+    background-color: #3498db; /* Soft blue theme */
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(52, 152, 219, 0.3);
+    transition: background-color 0.3s, box-shadow 0.3s;
+  }
+  .btn:hover {
+    background-color: #2980b9; /* Darker blue on hover */
+    box-shadow: 0 6px 12px rgba(41, 128, 185, 0.4);
+  }
+  
+  /* Responsive adjustments for smaller screens */
+  @media(max-width: 500px) {
+    body.login-page {
+      padding: 10px;
+    }
+    .login-container {
+      padding: 30px 20px;
+    }
+    .logo h2 {
+      font-size: 1.5rem;
+    }
+    input[type="text"],
+    input[type="password"] {
+      padding: 12px 14px;
+      font-size: 0.95rem;
+    }
+    .btn {
+      font-size: 1rem;
+      padding: 12px;
+    }
+  }

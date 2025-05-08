@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    
+    <!-- Favicon Configuration -->
+    <link rel="icon" href="img/pdb.png" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="32x32" href="img/pdb.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="img/pdb.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="img/pdb.png">
+    
+    <title>Logging Out - Paso De Blas National High School</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sidebar-blue: #0d265c;
+            --sidebar-dark: #293fad;
+            --primary: #2745a5;
+            --content-bg: #f5f7ff;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--sidebar-blue);
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden;
+        }
+
+        .logout-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            z-index: 1000;
+            background: rgba(13, 38, 92, 0.95);
+            backdrop-filter: blur(3px);
+        }
+
+        .logout-container {
+            max-width: 500px;
+            padding: 2rem;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .logo-container {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 1.5rem;
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        .logo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.3));
+        }
+
+        .logout-message {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .logout-text {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.6;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 2rem 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, #2745a5, #293fad);
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            margin: 1rem auto;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .brand-text {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 2rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+    </style>
+</head>
+<body>
+    <div class="logout-screen">
+        <div class="logout-container">
+            <div class="logo-container">
+                <img src="img/pdb.png" alt="Paso De Blas NHS Logo">
+            </div>
+            <h1 class="logout-message">Logging Out</h1>
+            <p class="logout-text">Securely ending your session...</p>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            
+            <div class="spinner"></div>
+            <div class="brand-text">Paso De Blas National High School</div>
+        </div>
+    </div>
+
+    <script>
+        // Animate progress bar
+        const progressBar = document.getElementById('progressBar');
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += 2;
+            progressBar.style.width = `${Math.min(progress, 100)}%`;
+            
+            if (progress >= 100) {
+                clearInterval(interval);
+                // Redirect after animation completes
+                setTimeout(() => {
+                    window.location.href = "index.php";
+                }, 300);
+            }
+        }, 30);
+
+        // Ensure redirect happens even if JS is slow
+        setTimeout(() => {
+            window.location.href = "index.php";
+        }, 5000); // 5 second fallback
+    </script>
+</body>
+</html>

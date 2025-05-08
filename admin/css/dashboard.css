@@ -1,0 +1,221 @@
+/* ===== Base Styles ===== */
+:root {
+  --primary: #0d265c;
+  --primary-light: #1a4b9c;
+  --secondary: #f8b739;
+  --accent: #00a8ff;
+  --success: #28a745;
+  --info: #17a2b8;
+  --light: #f8f9fa;
+  --dark: #343a40;
+  --gray: #6c757d;
+  --light-gray: #e9ecef;
+  --white: #ffffff;
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --transition: all 0.3s ease;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #f5f7fa;
+  color: var(--dark);
+  overflow-x: hidden;
+}
+
+/* ===== Layout Styles ===== */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+}
+
+.content-area {
+  flex: 1;
+  padding: 20px;
+  margin-left: 250px;
+  transition: var(--transition);
+}
+
+.header {
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header h1 {
+  font-weight: 600;
+  color: var(--primary);
+  position: relative;
+  display: inline-block;
+  margin: 0;
+}
+
+.header h1::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: var(--secondary);
+  border-radius: 3px;
+}
+
+.main-content {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: var(--shadow);
+  margin-bottom: 30px;
+}
+
+/* ===== Card Styles ===== */
+.card {
+  border: none;
+  border-radius: 12px;
+  transition: var(--transition);
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  border-left: 4px solid var(--accent);
+  background: linear-gradient(135deg, rgba(13, 38, 92, 0.03) 0%, rgba(248, 183, 57, 0.03) 100%);
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.card-body {
+  padding: 25px;
+  position: relative;
+  z-index: 1;
+}
+
+.card i {
+  font-size: 2.5rem;
+  color: var(--accent);
+  margin-bottom: 15px;
+  background: rgba(0, 168, 255, 0.1);
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-title {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 15px;
+  color: var(--gray);
+}
+
+.card-text {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0;
+}
+
+/* ===== Chart Containers ===== */
+.chart-container1 {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 25px;
+  margin-top: 30px;
+  box-shadow: var(--shadow);
+  position: relative;
+}
+
+.chart-container1 h3 {
+  color: var(--primary);
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* ===== Button Styles ===== */
+.btn-primary {
+  background-color: var(--primary);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: var(--transition);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(13, 38, 92, 0.2);
+  color: white;
+}
+
+/* ===== Modal Styles ===== */
+.modal-content {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background: var(--primary);
+  color: white;
+  border-radius: 12px 12px 0 0;
+}
+
+.modal-title {
+  font-weight: 500;
+}
+
+.modal-body {
+  padding: 25px;
+}
+
+/* ===== Responsive Adjustments ===== */
+@media (max-width: 992px) {
+  .content-area {
+    margin-left: 0;
+    padding: 15px;
+  }
+  
+  .card {
+    margin-bottom: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .card-text {
+    font-size: 2rem;
+  }
+  
+  .chart-container1 {
+    padding: 15px;
+  }
+}
+
+/* ===== Animation Effects ===== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+  animation: fadeIn 0.6s ease forwards;
+}
+
+/* Delay animations for each card */
+.card:nth-child(1) { animation-delay: 0.1s; }
+.card:nth-child(2) { animation-delay: 0.2s; }
+.card:nth-child(3) { animation-delay: 0.3s; }
+.card:nth-child(4) { animation-delay: 0.4s; }
+.card:nth-child(5) { animation-delay: 0.5s; }
