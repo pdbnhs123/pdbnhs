@@ -13,4 +13,8 @@ github
 username: pdbnhs123
 password: Aszing09959129776
 
+Domain : pasodeblasnhs.iceiy.com
+Domain Status : ACTIVE
+Username : icei_38874221
+Password : 7ecZJ2nl3d8P
 
